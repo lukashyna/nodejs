@@ -1,40 +1,16 @@
-const {
-    listContacts,
-    getContactById,
-    removeContact,
-    addContact,
-} = require('./contacts.js');
-const argv = require('yargs').argv;
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const {contactRouter} = require('./contact/contact.router');
+const app = express();
 
-const invokeAction = ({ action, id, name, email, phone }) => {
-    switch (action.toString()) {
-      case 'list':
-        listContacts()
-          .then(res => console.table(res))
-          .catch(err => console.log(err));
-        break;
-  
-      case 'get':
-        getContactById(id)
-          .then(res => console.table(res))
-          .catch(err => console.log(err));
-        break;
-  
-      case 'add':
-        addContact(name, phone, email)
-          .then(res => console.table(res))
-          .catch(err => console.log(err));
-        break;
-  
-      case 'remove':
-        removeContact(id)
-          .then(res => console.table(res))
-          .catch(err => console.log(err));
-        break;
-  
-      default:
-        console.warn('\x1B[31m Unknown action type!');
-    }
-  }
-  
-  invokeAction(argv);
+app.use(cors());
+app.use(morgan('tiny'));
+app.use('/', express.static('public'));
+app.use(express.json());
+app.use('/contacts',contactRouter);
+// app.use('/contacts');
+// contactsRouter.initialize(app);
+
+app.listen(3000, ()=> console.log('Server listening on port: 3000'));
+
