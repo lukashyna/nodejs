@@ -1,12 +1,12 @@
 const {Router} = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Contact = require('../contact/contact.model');
+const User = require('../user/user.model');
 const {authMiddelware} = require('../middlewares/auth.middleware')
 
 const {
-    validateCreateContactMiddleware,
-} = require('../contact/contact.validator');
+    validateCreateUserMiddleware,
+} = require('../user/user.validation');
 
 const {
     validateLoginMiddleware,
@@ -15,12 +15,12 @@ const {
 const authRouter = Router();
 
 authRouter.post('/registration',
-validateCreateContactMiddleware,
+validateCreateUserMiddleware,
 async (req, res) => {
     try {
         const { password} = req.body;
         const hashPassword = await bcrypt.hash(password, 10);
-        await Contact.addContact({...req.body, password: hashPassword});
+        await User.addUser({...req.body, password: hashPassword});
         res.status(201);
     } catch (e) {
         res.status(409).send(`Email in use`)
@@ -34,19 +34,19 @@ async (req, res) => {
     try {
         const {email, password} = req.body;
         console.log(res);
-        const currentContact = await Contact.getContactWithQuery({email});
-        if (!currentContact.length) {
+        const currentUser = await User.getUserWithQuery({email});
+        if (!currentUser.length) {
             res.status(401).send(`Email or password is wrong`)
             return;
         }
-        const isEqualPassword = await bcrypt.compare(password, currentContact[0].password);
+        const isEqualPassword = await bcrypt.compare(password, currentUser[0].password);
         if (!isEqualPassword) {
             res.status(400).send('Email or password is wrong')
             return;
         }
-        const acces_token = await jwt.sign({id: currentContact[0]._id}, process.env.PRIVATE_JWT_KEY, {expiresIn: '7d'});
+        const acces_token = await jwt.sign({id: currentUser[0]._id}, process.env.PRIVATE_JWT_KEY, {expiresIn: '7d'});
         console.log(currentContact[0]._id)
-        res.json({accces_token: `Bearer ${acces_token}`, user: `email: ${currentContact[0].email}, subscription: ${currentContact[0].subscription} `})
+        res.json({acces_token: `Bearer ${acces_token}`, user: `email: ${currentUser[0].email}, subscription: ${currentUser[0].subscription} `})
     } catch (e) {
         res.status(500).send(e)
     } finally {
@@ -55,17 +55,17 @@ async (req, res) => {
 })
 authRouter.post('/logout',
 authMiddelware,
-validateCreateContactMiddleware,
+validateCreateUserMiddleware,
 async (req, res) => {
     try {
-        const {_id} = req.currentContact;
-        const contact = await Contact.getContactById(_id);
+        const {_id} = req.currentUser;
+        const user = await User.getUserById(_id);
         let token = req.headers.authorization;
-        if(!contact) {
+        if(!user) {
             res.status(401).send(`Not authorized`)
             return
         }
-        await Contact.updateContact(_id, token = null);
+        await User.updateUser(_id, token = null);
         res.status(204).send(`204 No Content`)
     } catch (e) {
         res.status(401).send(`Not authorized`)
@@ -77,16 +77,16 @@ async (req, res) => {
 })
 authRouter.post('/current',
 authMiddelware,
-validateCreateContactMiddleware,
+validateCreateUserMiddleware,
 async (req, res) => {
     try {
-        const contact = req.currentContact;
-        console.log(contact)
-        if(!contact) {
+        const user = req.currentContact;
+        console.log(user)
+        if(!user) {
             res.status(401).send(`Not authorized`)
             return
         }
-        res.json({ user: `email: ${contact.email}, subscription: ${contact.subscription} `})
+        res.json({ user: `email: ${user.email}, subscription: ${user.subscription} `})
     } catch (e) {
         res.status(500).send(e)
     

@@ -1,14 +1,9 @@
 const mongoose = require('mongoose');
 
 const contactSchema = new mongoose.Schema({
+    name: String,
     email: String,
-    password: String,
-    subscription: {
-        type: String,
-        enum: ["free", "pro", "premium"],
-        default: "free"
-        },
-    token: String,
+    phone: String
 },{versionKey: false});
 
 class Contact {
@@ -18,9 +13,9 @@ class Contact {
     listContacts = async () => {
         return await this.contact.find();
     }
-    getContactWithQuery = async (query={}) => {
-        return await this.contact.find(query)
-    }
+    // getContactWithQuery = async (query={}) => {
+    //     return await this.contact.find(query)
+    // }
     getContactById = async id => {
         return await this.contact.findById(id);
     }
