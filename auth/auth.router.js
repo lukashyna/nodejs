@@ -6,6 +6,8 @@ const {authMiddelware} = require('../middlewares/auth.middleware');
 const{avatarUploader} = require('../middlewares/avatarUploader.middleware');
 const {getAvatar} = require('../utilits/avatar-generation');
 const fs = require('fs');
+const path = require('path')
+
 
 
 
@@ -26,27 +28,27 @@ async (req, res) => {
     try {
         const { email, password} = req.body;
         const hashPassword = await bcrypt.hash(password, 10);
-        const variant = 'female'
-        const avatar = await getAvatar();
+        const avatar = await getAvatar(email);
+        const oldPath = path.join(__dirname,`../tmp/${avatar}.png`)
+        const newPath = path.join(__dirname,`../public/images/${avatar}.png`)
 
-        fs.rename('../tmp/', '../public/images/', (err) => {
+         fs.renameSync(oldPath, newPath, function (err) {
             if (err) {
-              console.error(err)
-              return
-            }
-          })
-        
+                console.log(err)
+                return
+        }
+            console.log('Successfully renamed - AKA moved!')
+        })
 
-        const avatarURL = `http://localhost:3000/images/`;
-        console.log(avatarURL)
+        const avatarURL = `http://localhost:3000/images/${avatar}.png`;
         await User.addUser({...req.body, password: hashPassword, avatarURL: avatarURL});
        
         res.status(201).json({
             user: { email, avatarURL: avatarURL},
           });
     } catch (e) {
-        // res.status(409).send(`Email in use`)
-        console.log(e)
+        res.status(409).send(`Email in use`)
+        
     } finally {
         res.end()
     }
